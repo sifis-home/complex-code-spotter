@@ -1,0 +1,214 @@
+name: complex-code-spotter-ubuntu
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  code-coverage:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install Rust stable
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+        override: true
+
+    - name: Install grcov
+      env:
+        GRCOV_LINK: https://github.com/mozilla/grcov/releases/download
+        GRCOV_VERSION: v0.8.7
+      run: |
+        curl -L "$GRCOV_LINK/$GRCOV_VERSION/grcov-x86_64-unknown-linux-musl.tar.bz2" |
+        tar xj -C $HOME/.cargo/bin
+
+    - name: Install llvm-tools-preview
+      run: |
+        rustup component add llvm-tools-preview
+
+    # Not necessary on a newly created image, but strictly advised
+    - name: Run cargo clean
+      run: |
+        cargo clean
+
+    - name: Run tests
+      env:
+        CARGO_INCREMENTAL: 0
+        LLVM_PROFILE_FILE: "complex-code-spotter-%p-%m.profraw"
+        RUSTFLAGS: >
+          -Cinstrument-coverage -Ccodegen-units=1 -Clink-dead-code
+          -Coverflow-checks=off
+        RUSTDOCFLAGS: >
+          -Cinstrument-coverage -Ccodegen-units=1 -Clink-dead-code
+          -Coverflow-checks=off
+      run: |
+        cargo test --verbose
+
+    - name: Get coverage data for coveralls
+      run: |
+        grcov . --binary-path ./target/debug/ -s . -t lcov --branch \
+              --ignore-not-existing --ignore "/*" --ignore "../*" -o lcov.info
+
+    - name: Coveralls upload
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        path-to-lcov: lcov.info
+
+  static-code-analysis:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install rust-code-analysis
+      env:
+        RCA_LINK: https://github.com/mozilla/rust-code-analysis/releases/download
+        RCA_VERSION: v0.0.23
+      run: |
+        mkdir -p $HOME/.local/bin
+        curl -L "$RCA_LINK/$RCA_VERSION/rust-code-analysis-linux-cli-x86_64.tar.gz" |
+        tar xz -C $HOME/.local/bin
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+    - name: Run rust-code-analysis
+      run: |
+        mkdir $HOME/rca-json
+        # FIXME: Update rca version to analyze the entire directory of a repo
+        rust-code-analysis-cli --metrics -O json --pr -o "$HOME/rca-json" -p src/
+
+    - name: Upload rust-code-analysis json
+      uses: actions/upload-artifact@v3
+      with:
+        name: rca-json-ubuntu
+        path: ~/rca-json
+
+  weighted-code-coverage:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install stable
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+        override: true
+
+    - name: Install grcov
+      env:
+        GRCOV_LINK: https://github.com/mozilla/grcov/releases/download
+        GRCOV_VERSION: v0.8.7
+        GRCOV_BINARY: grcov-x86_64-unknown-linux-musl.tar.bz2
+      run: |
+        curl -L "$GRCOV_LINK/$GRCOV_VERSION/$GRCOV_BINARY" |
+        tar xj -C $HOME/.cargo/bin
+
+    - name: Install weighted-code-coverage
+      env:
+        WCC_LINK: https://github.com/giovannitangredi/weighted-code-coverage/releases/download
+        WCC_VERSION: v0.1.0
+        WCC_BINARY: weighted-code-coverage-0.1.0-x86_64-unknown-linux-gnu.tar.gz
+      run: |
+        curl -L "$WCC_LINK/$WCC_VERSION/$WCC_BINARY" |
+        tar xz -C $HOME/.cargo/bin
+
+    - name: Install llvm-tools-preview
+      run: |
+        rustup component add llvm-tools-preview
+
+    # Not necessary on a newly created image, but strictly advised
+    - name: Run cargo clean
+      run: |
+        cargo clean
+
+    - name: Run tests
+      env:
+        RUSTFLAGS: "-Cinstrument-coverage"
+        LLVM_PROFILE_FILE: "complex-code-spotter-%p-%m.profraw"
+      run: |
+        cargo test --verbose
+
+    - name: Run grcov
+      run: |
+        grcov . --binary-path ./target/debug/ -t coveralls -s . --token YOUR_COVERALLS_TOKEN > coveralls.json
+
+    - name: Run weighted-code-coverage
+      run: |
+        mkdir $HOME/wcc-output
+        weighted-code-coverage -p src/ -j coveralls.json -c --json $HOME/wcc-output/out.json
+
+    - name: Upload weighted-code-coverage data
+      uses: actions/upload-artifact@v3
+      with:
+        name: weighted-code-coverage-ubuntu
+        path: ~/wcc-output/out.json
+
+  dependency-check:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install stable
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+        override: true
+
+    - name: Install nightly
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: nightly
+
+    - name: Install cargo-udeps
+      env:
+        UDEPS_LINK: https://github.com/est31/cargo-udeps/releases/download
+        UDEPS_VERSION: v0.1.28
+      run: |
+        curl -L "$UDEPS_LINK/$UDEPS_VERSION/cargo-udeps-$UDEPS_VERSION-x86_64-unknown-linux-gnu.tar.gz" |
+        tar xz -C $HOME/.cargo/bin --strip-components 2
+
+    - name: Install cargo-deny
+      env:
+        DENY_LINK: https://github.com/EmbarkStudios/cargo-deny/releases/download
+        DENY_VERSION: 0.12.1
+      run: |
+        curl -L "$DENY_LINK/$DENY_VERSION/cargo-deny-$DENY_VERSION-x86_64-unknown-linux-musl.tar.gz" |
+        tar xz -C $HOME/.cargo/bin --strip-components 1
+
+    - name: Install cargo-audit
+      env:
+        AUDIT_LINK: https://github.com/rustsec/rustsec/releases/download/cargo-audit%2F
+        AUDIT_VERSION: v0.16.0
+      run: |
+        curl -L "$AUDIT_LINK$AUDIT_VERSION/cargo-audit-x86_64-unknown-linux-musl-$AUDIT_VERSION.tgz" |
+        tar xzv -C $HOME/.cargo/bin --strip-components 1
+
+    - name: Run cargo-udeps
+      run: |
+        cargo +nightly udeps --all-targets
+
+    - name: Run cargo-deny
+      run: |
+        cargo deny init
+        cargo deny check bans
+
+    - name: Run cargo-audit
+      run: |
+        cargo audit

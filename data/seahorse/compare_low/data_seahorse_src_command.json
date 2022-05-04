@@ -1,0 +1,30 @@
+{
+  "Cognitive": [
+    {
+      "complexity": 17,
+      "start_line": 207,
+      "end_line": 244,
+      "text": "    pub fn run(&self, args: Vec<String>) {\n        let args = Self::normalized_args(args);\n\n        match args.split_first() {\n            Some((cmd, args_v)) => match self.select_command(cmd) {\n                Some(command) => command.run(args_v.to_vec()),\n                None => match self.action {\n                    Some(action) => {\n                        if args.contains(&\"-h\".to_string()) || args.contains(&\"--help\".to_string())\n                        {\n                            self.help();\n                            return;\n                        }\n                        action(&Context::new(\n                            args.to_vec(),\n                            self.flags.clone(),\n                            self.help_text(),\n                        ));\n                    }\n                    None => self.help(),\n                },\n            },\n            None => match self.action {\n                Some(action) => {\n                    if args.contains(&\"-h\".to_string()) || args.contains(&\"--help\".to_string()) {\n                        self.help();\n                        return;\n                    }\n                    action(&Context::new(\n                        args.to_vec(),\n                        self.flags.clone(),\n                        self.help_text(),\n                    ));\n                }\n                None => self.help(),\n            },\n        }\n    }"
+    },
+    {
+      "complexity": 10,
+      "start_line": 256,
+      "end_line": 279,
+      "text": "            let flag_helps = &flags.iter().map(|f| {\n                let alias = match &f.alias {\n                    Some(alias) => alias\n                        .iter()\n                        .map(|a| format!(\"-{}\", a))\n                        .collect::<Vec<String>>()\n                        .join(\", \"),\n                    None => String::new(),\n                };\n                let val = match f.flag_type {\n                    FlagType::Int => int_val,\n                    FlagType::Float => float_val,\n                    FlagType::String => string_val,\n                    _ => \"\",\n                };\n\n                let help = if alias.is_empty() {\n                    format!(\"--{} {}\", f.name, val)\n                } else {\n                    format!(\"{}, --{} {}\", alias, f.name, val)\n                };\n\n                (help, f.description.clone())\n            });"
+    },
+    {
+      "complexity": 10,
+      "start_line": 315,
+      "end_line": 355,
+      "text": "    fn command_help_text(&self) -> String {\n        let mut text = String::new();\n\n        if let Some(commands) = &self.commands {\n            text += \"\\nCommands:\\n\";\n\n            let name_max_len = &commands\n                .iter()\n                .map(|c| {\n                    if let Some(alias) = &c.alias {\n                        format!(\"{}, {}\", alias.join(\", \"), c.name).len()\n                    } else {\n                        c.name.len()\n                    }\n                })\n                .max()\n                .unwrap();\n\n            for c in commands {\n                let command_name = if let Some(alias) = &c.alias {\n                    format!(\"{}, {}\", alias.join(\", \"), c.name)\n                } else {\n                    c.name.clone()\n                };\n\n                let description = match &c.description {\n                    Some(description) => description,\n                    None => \"\",\n                };\n\n                text += &format!(\n                    \"\\t{} {}: {}\\n\",\n                    command_name,\n                    \" \".repeat(name_max_len - command_name.len()),\n                    description\n                );\n            }\n        }\n\n        text\n    }"
+    }
+  ],
+  "Cyclomatic": [
+    {
+      "complexity": 13,
+      "start_line": 207,
+      "end_line": 244,
+      "text": "    pub fn run(&self, args: Vec<String>) {\n        let args = Self::normalized_args(args);\n\n        match args.split_first() {\n            Some((cmd, args_v)) => match self.select_command(cmd) {\n                Some(command) => command.run(args_v.to_vec()),\n                None => match self.action {\n                    Some(action) => {\n                        if args.contains(&\"-h\".to_string()) || args.contains(&\"--help\".to_string())\n                        {\n                            self.help();\n                            return;\n                        }\n                        action(&Context::new(\n                            args.to_vec(),\n                            self.flags.clone(),\n                            self.help_text(),\n                        ));\n                    }\n                    None => self.help(),\n                },\n            },\n            None => match self.action {\n                Some(action) => {\n                    if args.contains(&\"-h\".to_string()) || args.contains(&\"--help\".to_string()) {\n                        self.help();\n                        return;\n                    }\n                    action(&Context::new(\n                        args.to_vec(),\n                        self.flags.clone(),\n                        self.help_text(),\n                    ));\n                }\n                None => self.help(),\n            },\n        }\n    }"
+    }
+  ]
+}

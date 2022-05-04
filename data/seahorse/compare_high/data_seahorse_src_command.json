@@ -1,0 +1,10 @@
+{
+  "Cognitive": [
+    {
+      "complexity": 17,
+      "start_line": 207,
+      "end_line": 244,
+      "text": "    pub fn run(&self, args: Vec<String>) {\n        let args = Self::normalized_args(args);\n\n        match args.split_first() {\n            Some((cmd, args_v)) => match self.select_command(cmd) {\n                Some(command) => command.run(args_v.to_vec()),\n                None => match self.action {\n                    Some(action) => {\n                        if args.contains(&\"-h\".to_string()) || args.contains(&\"--help\".to_string())\n                        {\n                            self.help();\n                            return;\n                        }\n                        action(&Context::new(\n                            args.to_vec(),\n                            self.flags.clone(),\n                            self.help_text(),\n                        ));\n                    }\n                    None => self.help(),\n                },\n            },\n            None => match self.action {\n                Some(action) => {\n                    if args.contains(&\"-h\".to_string()) || args.contains(&\"--help\".to_string()) {\n                        self.help();\n                        return;\n                    }\n                    action(&Context::new(\n                        args.to_vec(),\n                        self.flags.clone(),\n                        self.help_text(),\n                    ));\n                }\n                None => self.help(),\n            },\n        }\n    }"
+    }
+  ]
+}

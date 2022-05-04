@@ -1,0 +1,18 @@
+{
+  "Cognitive": [
+    {
+      "complexity": 13,
+      "start_line": 125,
+      "end_line": 147,
+      "text": "    pub fn value(&self, v: Option<String>) -> Result<FlagValue, FlagError> {\n        match self.flag_type {\n            FlagType::Bool => Ok(FlagValue::Bool(true)),\n            FlagType::String => match v {\n                Some(s) => Ok(FlagValue::String(s)),\n                None => Err(FlagError::ArgumentError),\n            },\n            FlagType::Int => match v {\n                Some(i) => match i.parse::<isize>() {\n                    Ok(i) => Ok(FlagValue::Int(i)),\n                    Err(_) => Err(FlagError::ValueTypeError),\n                },\n                None => Err(FlagError::ArgumentError),\n            },\n            FlagType::Float => match v {\n                Some(f) => match f.parse::<f64>() {\n                    Ok(f) => Ok(FlagValue::Float(f)),\n                    Err(_) => Err(FlagError::ValueTypeError),\n                },\n                None => Err(FlagError::ArgumentError),\n            },\n        }\n    }"
+    }
+  ],
+  "Cyclomatic": [
+    {
+      "complexity": 15,
+      "start_line": 125,
+      "end_line": 147,
+      "text": "    pub fn value(&self, v: Option<String>) -> Result<FlagValue, FlagError> {\n        match self.flag_type {\n            FlagType::Bool => Ok(FlagValue::Bool(true)),\n            FlagType::String => match v {\n                Some(s) => Ok(FlagValue::String(s)),\n                None => Err(FlagError::ArgumentError),\n            },\n            FlagType::Int => match v {\n                Some(i) => match i.parse::<isize>() {\n                    Ok(i) => Ok(FlagValue::Int(i)),\n                    Err(_) => Err(FlagError::ValueTypeError),\n                },\n                None => Err(FlagError::ArgumentError),\n            },\n            FlagType::Float => match v {\n                Some(f) => match f.parse::<f64>() {\n                    Ok(f) => Ok(FlagValue::Float(f)),\n                    Err(_) => Err(FlagError::ValueTypeError),\n                },\n                None => Err(FlagError::ArgumentError),\n            },\n        }\n    }"
+    }
+  ]
+}

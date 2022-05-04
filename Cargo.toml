@@ -1,0 +1,39 @@
+[package]
+name = "complex-code-spotter"
+version = "0.1.0"
+description = """
+Extracts code snippets which are deemed complex according to some specific
+metrics.
+"""
+repository = "https://github.com/sifis-home/complex-code"
+keywords = ["code-complexity", "code-snippets"]
+license = "MIT"
+edition = "2021"
+
+[[bin]]
+name = "complex-code-spotter"
+
+[dependencies]
+arg_enum_proc_macro = "^0.3"
+clap = { version = "^3.2", features = ["derive"] }
+rust-code-analysis = "^0.0.24"
+globset = "^0.4"
+html-escape = "^0.2"
+crossbeam = "^0.8"
+encoding_rs = "^0.8"
+serde = { version = "^1.0", features = ["derive"] }
+serde_json = "^1.0"
+thiserror = "^1.0"
+tracing = "^0.1"
+tracing-subscriber = { version = "^0.3", features = ["env-filter"] }
+walkdir = "^2.3"
+
+[profile.release]
+opt-level = 3
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = "unwind"
+incremental = false
+overflow-checks = false
+strip = "debuginfo"

@@ -1,0 +1,10 @@
+{
+  "Cognitive": [
+    {
+      "complexity": 18,
+      "start_line": 18,
+      "end_line": 51,
+      "text": "    pub fn new(args: Vec<String>, flags: Option<Vec<Flag>>, help_text: String) -> Self {\n        let mut v = Vec::new();\n        let mut parsed_args = args;\n        let flags_val = match flags {\n            Some(flags) => {\n                for flag in flags {\n                    if let Some(index) = flag.option_index(&parsed_args) {\n                        parsed_args.remove(index);\n\n                        let val = if flag.flag_type != FlagType::Bool {\n                            if parsed_args.len() <= index {\n                                None\n                            } else {\n                                Some(parsed_args.remove(index))\n                            }\n                        } else {\n                            None\n                        };\n                        v.push((flag.name.to_string(), flag.value(val)))\n                    } else {\n                        v.push((flag.name.to_string(), Err(FlagError::NotFound)))\n                    }\n                }\n                Some(v)\n            }\n            None => None,\n        };\n\n        Self {\n            args: parsed_args,\n            flags: flags_val,\n            help_text,\n        }\n    }"
+    }
+  ]
+}
