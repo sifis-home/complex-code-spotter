@@ -12,7 +12,7 @@ impl ComplexityChecker for Cyclomatic {
     fn check(space: &FuncSpace, threshold: usize) -> Option<usize> {
         let value = space.metrics.cyclomatic.cyclomatic() as usize;
         (value > threshold || space.metrics.cyclomatic.cyclomatic_max() as usize > threshold)
-            .then(|| value)
+            .then_some(value)
     }
 }
 
@@ -22,7 +22,7 @@ impl ComplexityChecker for Cognitive {
     fn check(space: &FuncSpace, threshold: usize) -> Option<usize> {
         let value = space.metrics.cognitive.cognitive() as usize;
         (value > threshold || space.metrics.cognitive.cognitive_max() as usize > threshold)
-            .then(|| value)
+            .then_some(value)
     }
 }
 

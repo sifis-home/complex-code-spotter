@@ -9,7 +9,7 @@ use crate::Snippets;
 use crate::{Error, Result};
 
 /// Supported output formats.
-#[derive(ArgEnum, Debug, PartialEq)]
+#[derive(ArgEnum, Debug, PartialEq, Eq)]
 pub enum OutputFormat {
     /// Markdown format.
     #[arg_enum(name = "markdown")]
@@ -62,7 +62,7 @@ fn create_filenames(snippets: &[Snippets]) -> Vec<String> {
                 .iter()
                 .filter_map(|c| {
                     c.to_str()
-                        .map(|s| (![".", "..", ":", "/", "\\"].contains(&s)).then(|| s))
+                        .map(|s| (![".", "..", ":", "/", "\\"].contains(&s)).then_some(s))
                 })
                 .flatten()
                 .collect::<Vec<&str>>()
